@@ -102,7 +102,7 @@ function playCard(pid,id){if(gameOver||turn!==pid||awaitingColor)return;const p=
 function applyEffect(c){
  if(c.value==='skip'){
   turn=players.length===2?turn:nextIndex(nextIndex(turn));
-  message('Aussetzen! '+players[turn].name+' ist übersprungen.');
+  message('Aussetzen! Der nächste Spieler wird übersprungen.');
  }else if(c.value==='reverse'){
   direction*=-1;
   if(players.length>2)turn=nextIndex(turn);
