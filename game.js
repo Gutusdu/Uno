@@ -25,7 +25,8 @@ function artUrl(c){
  if(artCache.has(key))return artCache.get(key);
  const canvas=document.createElement('canvas');canvas.width=220;canvas.height=340;
  const ctx=canvas.getContext('2d',{willReadFrequently:true});const im=new Image();
- const draw=()=>{
+ let rendered=false;const draw=()=>{
+  if(rendered)return;rendered=true;
   ctx.drawImage(im,source[0],source[1],source[2]-source[0],source[3]-source[1],0,0,220,340);
   const from=COLOR_HUE[source[4]],to=COLOR_HUE[target];
   if(from!==undefined&&to!==undefined&&source[4]!==target){
