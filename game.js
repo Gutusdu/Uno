@@ -9,7 +9,17 @@ const ART={0:[18,20,214,338,'red'],1:[220,20,407,338,'red'],2:[410,20,597,338,'b
 const artCache=new Map();
 function artUrl(c){const key=c.value; if(artCache.has(key))return artCache.get(key);const a=ART[key];if(!a)return '';const canvas=document.createElement('canvas');canvas.width=220;canvas.height=340;const ctx=canvas.getContext('2d');const im=new Image();im.src=ATLAS; if(!im.complete){im.onload=()=>{ctx.drawImage(im,a[0],a[1],a[2]-a[0],a[3]-a[1],0,0,220,340);artCache.set(key,canvas.toDataURL('image/jpeg',.92));render()};return '';}ctx.drawImage(im,a[0],a[1],a[2]-a[0],a[3]-a[1],0,0,220,340);const url=canvas.toDataURL('image/jpeg',.92);artCache.set(key,url);return url;}
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-function makeDeck(){const d=[];let id=0;const add=(value,color,count)=>{for(let k=0;k<count;k++)d.push({id:id++,color,value})};for(let n=0;n<=9;n++){const color=n<=1?'red':n<=3?'blue':n<=5?'yellow':'green';add(String(n),color,n===0?1:2)}add('draw2','red',2);add('reverse','blue',2);add('skip','yellow',2);add('wild4','wild',4);add('wild','wild',4);return shuffle(d)}
+function makeDeck(){
+ const d=[];let id=0;
+ const add=(value,color,count)=>{for(let k=0;k<count;k++)d.push({id:id++,color,value})};
+ for(const color of COLORS){
+  add('0',color,1);
+  for(let n=1;n<=9;n++)add(String(n),color,2);
+  add('draw2',color,2);add('reverse',color,2);add('skip',color,2);
+ }
+ add('wild','wild',4);add('wild4','wild',4);
+ return shuffle(d)
+}
 function refill(){if(deck.length)return;const top=discard.pop();deck=shuffle(discard);discard=[top]}
 function takeCards(p,n,animate=false){
  const added=[];
@@ -23,12 +33,15 @@ function findCardTarget(p,c){
 }
 function animateFlight(fromRect,toElement,card,faceDown=false){
  if(!fromRect||!toElement)return;
- const r=toElement.getBoundingClientRect(),img=document.createElement('img');
+ const r=toElement.getBoundingClientRect();
+ const isPlayerDraw=faceDown&&toElement.id==='playerHand';
+ const h=isPlayerDraw?154:126,w=h*(220/340);
+ const img=document.createElement('img');
  img.src=artUrl(faceDown?{value:'back'}:card);img.alt='';img.className='flying-card';
- Object.assign(img.style,{left:fromRect.left+'px',top:fromRect.top+'px',width:fromRect.width+'px',height:fromRect.height+'px'});
+ Object.assign(img.style,{left:(fromRect.left+fromRect.width/2-w/2)+'px',top:(fromRect.top+fromRect.height/2-h/2)+'px',width:w+'px',height:h+'px'});
  document.body.appendChild(img);
  const dx=(r.left+r.width/2)-(fromRect.left+fromRect.width/2),dy=(r.top+r.height/2)-(fromRect.top+fromRect.height/2);
- const anim=img.animate([{transform:'translate(0,0) rotate(-8deg)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) rotate(8deg) scale(.72)',opacity:.95}],{duration:850,easing:'cubic-bezier(.2,.75,.25,1)'});
+ const anim=img.animate([{transform:'translate(0,0) rotate(-8deg) scale(1)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) rotate(5deg) scale(.82)',opacity:.96}],{duration:1050,easing:'cubic-bezier(.2,.75,.25,1)'});
  anim.onfinish=()=>img.remove()
 }
 function startGame(){clearTimeout(botTimer);const name=$('playerName').value.trim()||'Spieler';const count=Number($('botCount').value)||2;players=[{id:0,name,hand:[],bot:false,saidUno:false}];for(let i=1;i<=count;i++)players.push({id:i,name:'Bot '+i,hand:[],bot:true,saidUno:false});deck=makeDeck();discard=[];players.forEach(p=>{p.hand=[];takeCards(p,7)});let first=deck.pop();while(first.color==='wild'){deck.unshift(first);first=deck.pop()}discard=[first];currentColor=first.color;turn=0;direction=1;drawnThisTurn=false;gameOver=false;unoCalled=false;$('homeScreen').classList.add('hidden');$('gameScreen').classList.remove('hidden');$('yourName').textContent=name;message('Spiel läuft. Du bist dran.');render();if(first.value==='skip')turn=nextIndex(turn);else if(first.value==='reverse')direction=-1;else if(first.value==='draw2'){turn=nextIndex(turn);takeCards(players[turn],2,true);turn=nextIndex(turn)}render();if(players[turn].bot)scheduleBot()}
