@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101322">
+  <title>UNO</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar"><div class="brand">UN<span>O</span></div><div class="version">Version 1.1.1</div></header>
+    <section id="homeScreen" class="panel home-screen">
+      <p class="eyebrow">KARTENSPIEL</p><h1>Eine Runde UNO?</h1>
+      <p class="muted">Du gegen deine Bots. Ohne Lobby-Chaos und ohne Server-Zirkus.</p>
+      <label class="field">Dein Name<input id="playerName" maxlength="16" value="Spieler" autocomplete="off"></label>
+      <label class="field">Anzahl Bots<select id="botCount"><option value="1">1 Bot</option><option value="2" selected>2 Bots</option><option value="3">3 Bots</option></select></label>
+      <button id="startButton" class="button primary">Spiel starten</button>
+      <p id="homeStatus" class="status" aria-live="polite">Bereit.</p>
+    </section>
+    <section id="gameScreen" class="game-screen hidden">
+      <div class="game-head"><div><p class="eyebrow">SPIELTISCH</p><h1>UNO</h1></div><button id="newGameButton" class="button ghost">Neues Spiel</button></div>
+      <div id="opponents" class="opponents"></div>
+      <div class="table-area panel">
+        <div class="pile"><span class="pile-label">Ablagestapel</span><div id="discardPile" class="card-back">UNO</div></div>
+        <div class="table-info"><div id="turnLabel">Du bist dran</div><div id="colorLabel" class="muted">Farbe: Rot</div><div id="message" class="status" aria-live="polite"></div></div>
+        <button id="drawButton" class="button draw-button">Karte ziehen</button>
+      </div>
+      <div class="player-area"><div class="player-title"><strong id="yourName">Du</strong><span id="handCount">7 Karten</span></div><div id="playerHand" class="hand"></div></div>
+      <div class="bottom-actions"><button id="unoButton" class="button primary">UNO!</button><span class="muted">Wenn du nur noch eine Karte hast, drück UNO.</span></div>
+    </section>
+  </main>
+  <div id="colorDialog" class="dialog hidden" role="dialog" aria-modal="true" aria-labelledby="colorTitle">
+    <div class="dialog-card"><h2 id="colorTitle">Farbe wählen</h2><div class="color-options">
+      <button data-color="red" class="color-choice red" aria-label="Rot"></button><button data-color="blue" class="color-choice blue" aria-label="Blau"></button><button data-color="green" class="color-choice green" aria-label="Grün"></button><button data-color="yellow" class="color-choice yellow" aria-label="Gelb"></button>
+    </div></div>
+  </div>
+  <div id="endDialog" class="dialog hidden" role="dialog" aria-modal="true"><div class="dialog-card"><p class="eyebrow">RUNDE BEENDET</p><h2 id="endTitle"></h2><p id="endText" class="muted"></p><button id="playAgainButton" class="button primary">Nochmal spielen</button></div></div>
+</body>
+</html>
