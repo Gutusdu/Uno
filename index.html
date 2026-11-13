@@ -10,7 +10,7 @@
 </head>
 <body>
   <main class="app">
-    <header class="topbar"><div class="brand">UN<span>O</span></div><div class="version">Version 1.3.2</div></header>
+    <header class="topbar"><div class="brand">UN<span>O</span></div><div class="version">Version 1.4.0</div></header>
     <section id="homeScreen" class="panel home-screen">
       <p class="eyebrow">KARTENSPIEL</p><h1>Eine Runde UNO?</h1>
       <p class="muted">Du gegen deine Bots. Ohne Lobby-Chaos und ohne Server-Zirkus.</p>
@@ -23,9 +23,9 @@
       <div class="game-head"><div><p class="eyebrow">SPIELTISCH</p><h1>UNO</h1></div><button id="newGameButton" class="button ghost">Neues Spiel</button></div>
       <div id="opponents" class="opponents"></div>
       <div class="table-area panel">
-        <div class="pile"><span class="pile-label">Ablagestapel</span><div id="discardPile" class="card-back">UNO</div></div>
+        <div class="pile draw-pile"><span class="pile-label">Ziehstapel</span><button id="drawButton" class="deck-button" aria-label="Karte vom Ziehstapel ziehen"><span class="deck-stack"><img src="C7AF114F-93DB-4782-AF8A-56145BEEF82C.png" alt=""></span><span id="deckButtonCount" class="deck-count">108</span></button><span id="deckCount" class="pile-count">108 Karten</span></div><div class="pile"><span class="pile-label">Ablagestapel</span><div id="discardPile" class="card-back">UNO</div></div>
         <div class="table-info"><div id="turnLabel">Du bist dran</div><div id="colorLabel" class="muted">Farbe: Rot</div><div id="message" class="status" aria-live="polite"></div></div>
-        <button id="drawButton" class="button draw-button">Karte ziehen</button>
+        
       </div>
       <div class="player-area"><div class="player-title"><strong id="yourName">Du</strong><span id="handCount">7 Karten</span></div><div id="playerHand" class="hand"></div></div>
       <div class="bottom-actions"><button id="unoButton" class="button primary">UNO!</button><span class="muted">Wenn du nur noch eine Karte hast, drück UNO.</span></div>
