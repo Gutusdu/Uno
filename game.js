@@ -73,26 +73,47 @@ function cardHueFilter(c){
 }
 function animateFlight(fromRect,toElement,card,faceDown=false){
  if(!fromRect||!toElement)return;
- const r=toElement.getBoundingClientRect();
- const isPlayerDraw=faceDown&&toElement.id==='playerHand';
- const h=isPlayerDraw?154:126,w=h*(220/340);
+ const target=toElement.getBoundingClientRect();
+ const startH=Math.max(82,Math.min(132,fromRect.height||112));
+ const endH=Math.max(82,Math.min(132,target.height||112));
+ const h=Math.round((startH+endH)/2),w=Math.round(h*220/340);
+ const sx=fromRect.left+fromRect.width/2-w/2,sy=fromRect.top+fromRect.height/2-h/2;
+ const ex=target.left+target.width/2-w/2,ey=target.top+target.height/2-h/2;
  const img=document.createElement('img');
  img.src=artUrl(faceDown?{value:'back'}:card);img.alt='';img.className='flying-card';
- Object.assign(img.style,{left:(fromRect.left+fromRect.width/2-w/2)+'px',top:(fromRect.top+fromRect.height/2-h/2)+'px',width:w+'px',height:h+'px'});
+ Object.assign(img.style,{position:'fixed',left:sx+'px',top:sy+'px',width:w+'px',height:h+'px',margin:'0',padding:'0',objectFit:'contain',transform:'translate3d(0,0,0) rotate(-3deg)',opacity:'1'});
  document.body.appendChild(img);
- const dx=(r.left+r.width/2)-(fromRect.left+fromRect.width/2),dy=(r.top+r.height/2)-(fromRect.top+fromRect.height/2);
- const anim=img.animate([{transform:'translate(0,0) rotate(-8deg) scale(1)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) rotate(5deg) scale(.82)',opacity:.96}],{duration:1050,easing:'cubic-bezier(.2,.75,.25,1)'});
+ const dx=ex-sx,dy=ey-sy;
+ const anim=img.animate([
+  {transform:'translate3d(0,0,0) rotate(-3deg) scale(1)',opacity:1},
+  {transform:'translate3d('+dx*.52+'px,'+(dy*.52-34)+'px) rotate(2deg) scale(.94)',opacity:1,offset:.58},
+  {transform:'translate3d('+dx+'px,'+dy+'px) rotate(0deg) scale(.9)',opacity:1}
+ ],{duration:560,easing:'cubic-bezier(.2,.75,.25,1)',fill:'forwards'});
  anim.onfinish=()=>img.remove()
 }
 function startGame(){clearTimeout(botTimer);const name=$('playerName').value.trim()||'Spieler';const count=Number($('botCount').value)||2;players=[{id:0,name,hand:[],bot:false,saidUno:false}];for(let i=1;i<=count;i++)players.push({id:i,name:'Bot '+i,hand:[],bot:true,saidUno:false});deck=makeDeck();discard=[];players.forEach(p=>{p.hand=[];takeCards(p,7)});let first=deck.pop();while(first.color==='wild'){deck.unshift(first);first=deck.pop()}discard=[first];currentColor=first.color;turn=0;direction=1;drawnThisTurn=false;gameOver=false;unoCalled=false;$('homeScreen').classList.add('hidden');$('gameScreen').classList.remove('hidden');$('yourName').textContent=name;message('Spiel läuft. Du bist dran.');render();if(first.value==='skip')turn=nextIndex(turn);else if(first.value==='reverse')direction=-1;else if(first.value==='draw2'){turn=nextIndex(turn);takeCards(players[turn],2,true);turn=nextIndex(turn)}render();if(players[turn].bot)scheduleBot()}
 function nextIndex(i){return (i+direction+players.length)%players.length}
 function canPlay(c){const top=discard[discard.length-1];return c.color==='wild'||c.color===currentColor||c.value===top.value}
-function render(){if(!players.length)return;$('opponents').innerHTML=players.slice(1).map(p=>'<div class="opponent" data-player-id="'+p.id+'"><strong>'+escapeText(p.name)+'</strong><span>'+p.hand.length+' Karten</span><div class="opponent-cards">'+Array.from({length:Math.min(p.hand.length,5)},()=>'<i></i>').join('')+'</div></div>').join('');const top=discard[discard.length-1];$('deckCount').textContent=deck.length+' Karten';$('deckButtonCount').textContent=deck.length;const pile=$('discardPile');pile.className='card image-card';pile.innerHTML='';const topImg=document.createElement('img');topImg.alt=cardLabel(top);topImg.src=artUrl(top);pile.appendChild(topImg);$('colorLabel').textContent='Farbe: '+LABEL[currentColor];$('turnLabel').textContent=players[turn].bot?players[turn].name+' ist dran':'Du bist dran';$('handCount').textContent=players[0].hand.length+' Karten';$('playerHand').innerHTML='';players[0].hand.forEach(c=>{const b=document.createElement('button');b.className='card image-card';b.dataset.cardId=c.id;const image=document.createElement('img');image.alt=cardLabel(c);image.src=artUrl(c);b.appendChild(image);b.disabled=turn!==0||gameOver||!canPlay(c)||awaitingColor;b.setAttribute('aria-label',cardLabel(c)+' '+(c.color==='wild'?'Joker':LABEL[c.color]));b.addEventListener('click',()=>playCard(0,c.id));$('playerHand').appendChild(b)});$('drawButton').disabled=turn!==0||drawnThisTurn||gameOver;$('unoButton').disabled=gameOver||players[0].hand.length!==1}
+function render(){if(!players.length)return;$('opponents').innerHTML=players.slice(1).map(p=>'<div class="opponent" data-player-id="'+p.id+'"><strong>'+escapeText(p.name)+'</strong><span>'+p.hand.length+' Karten</span><div class="opponent-cards">'+Array.from({length:Math.min(p.hand.length,5)},()=>'<i></i>').join('')+'</div></div>').join('');const top=discard[discard.length-1];$('deckCount').textContent=deck.length+' Karten';$('deckButtonCount').textContent=deck.length;const pile=$('discardPile');pile.className='card image-card';pile.innerHTML='';const topImg=document.createElement('img');topImg.alt=cardLabel(top);topImg.src=artUrl(top);pile.appendChild(topImg);$('colorLabel').textContent='Farbe: '+LABEL[currentColor];$('directionLabel').textContent=direction===1?'Zugrichtung: ↻ im Uhrzeigersinn':'Zugrichtung: ↺ gegen den Uhrzeigersinn';$('turnLabel').textContent=players[turn].bot?players[turn].name+' ist dran':'Du bist dran';$('handCount').textContent=players[0].hand.length+' Karten';$('playerHand').innerHTML='';players[0].hand.forEach(c=>{const b=document.createElement('button');b.className='card image-card';b.dataset.cardId=c.id;const image=document.createElement('img');image.alt=cardLabel(c);image.src=artUrl(c);b.appendChild(image);b.disabled=turn!==0||gameOver||!canPlay(c)||awaitingColor;b.setAttribute('aria-label',cardLabel(c)+' '+(c.color==='wild'?'Joker':LABEL[c.color]));b.addEventListener('click',()=>playCard(0,c.id));$('playerHand').appendChild(b)});$('drawButton').disabled=turn!==0||drawnThisTurn||gameOver;$('unoButton').disabled=gameOver||players[0].hand.length!==1}
 function cardLabel(c){return ({skip:'⊘',reverse:'⇄',draw2:'+2',wild:'★',wild4:'+4'})[c.value]||c.value}
 function escapeText(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function message(t){$('message').textContent=t}
 function playCard(pid,id){if(gameOver||turn!==pid||awaitingColor)return;const p=players[pid],source=document.querySelector('[data-card-id="'+id+'"]'),sourceRect=(source||document.querySelector('[data-player-id="'+pid+'"] .opponent-cards')||document.querySelector('[data-player-id="'+pid+'"]'))?.getBoundingClientRect(),idx=p.hand.findIndex(c=>c.id===id);if(idx<0)return;const c=p.hand[idx];if(!canPlay(c))return;p.hand.splice(idx,1);discard.push(c);drawnThisTurn=false;render();animateFlight(sourceRect,$('discardPile'),c,false);p.saidUno=false;if(p.hand.length===1&&!p.bot&&!unoCalled){message('Du hast nur noch eine Karte. UNO drücken!');}if(p.hand.length===0){finish(p);return}if(c.color==='wild'){if(pid===0){awaitingColor=true;$('colorDialog').classList.remove('hidden');return}else{currentColor=chooseBotColor(p);applyEffect(c);return}}currentColor=c.color;applyEffect(c)}
-function applyEffect(c){if(c.value==='skip'){turn=nextIndex(turn)}else if(c.value==='reverse'){direction*=-1;if(players.length===2)turn=nextIndex(turn)}else if(c.value==='draw2'){turn=nextIndex(turn);takeCards(players[turn],2,true);turn=nextIndex(turn)}else if(c.value==='wild4'){turn=nextIndex(turn);takeCards(players[turn],4,true);turn=nextIndex(turn)}else turn=nextIndex(turn);unoCalled=false;message(players[turn].bot?players[turn].name+' ist dran.':'Du bist dran.');render();if(players[turn].bot)scheduleBot()}
+function applyEffect(c){
+ if(c.value==='skip'){
+  turn=players.length===2?turn:nextIndex(nextIndex(turn));
+  message('Aussetzen! '+players[turn].name+' ist übersprungen.');
+ }else if(c.value==='reverse'){
+  direction*=-1;
+  if(players.length>2)turn=nextIndex(turn);
+  message('Richtungswechsel! '+(direction===1?'Im Uhrzeigersinn':'Gegen den Uhrzeigersinn'));
+ }else if(c.value==='draw2'){
+  turn=nextIndex(turn);takeCards(players[turn],2,true);message(players[turn].name+' zieht 2 Karten und setzt aus.');turn=nextIndex(turn);
+ }else if(c.value==='wild4'){
+  turn=nextIndex(turn);takeCards(players[turn],4,true);message(players[turn].name+' zieht 4 Karten und setzt aus.');turn=nextIndex(turn);
+ }else turn=nextIndex(turn);
+ unoCalled=false;render();if(players[turn].bot)scheduleBot()
+}
 function chooseBotColor(p){const counts={red:0,blue:0,green:0,yellow:0};p.hand.forEach(c=>{if(c.color!=='wild')counts[c.color]++});return [...COLORS].sort((a,b)=>counts[b]-counts[a])[0]}
 function scheduleBot(){clearTimeout(botTimer);botTimer=setTimeout(botTurn,1650)}
 function botTurn(){if(gameOver||!players[turn]?.bot)return;const p=players[turn];const playable=p.hand.filter(canPlay);if(playable.length){playable.sort((a,b)=>{const score=c=>(c.value==='wild4'?5:c.value==='wild'?4:c.value==='draw2'?3:['skip','reverse'].includes(c.value)?2:0);return score(b)-score(a)});playCard(turn,playable[0].id)}else{takeCards(p,1,true);message(p.name+' zieht eine Karte.');drawnThisTurn=true;const c=p.hand[p.hand.length-1];render();if(canPlay(c)){setTimeout(()=>{if(!gameOver&&players[turn]===p)playCard(turn,c.id)},1100)}else{setTimeout(()=>{drawnThisTurn=false;turn=nextIndex(turn);render();if(players[turn].bot)scheduleBot()},650)}}}
