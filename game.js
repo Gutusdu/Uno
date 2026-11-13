@@ -34,7 +34,7 @@ function findCardTarget(p,c){
 function cardHueFilter(c){
  const source=ART[c.value]?.[4];
  const hue={red:0,blue:215,green:145,yellow:52};
- if(!source||source==='wild'||source==='back'||c.color==='wild'||!hue[c.color])return 'drop-shadow(0 5px 5px #0008)';
+ if(!source||source==='wild'||source==='back'||c.color==='wild'||hue[c.color]===undefined)return 'drop-shadow(0 5px 5px #0008)';
  return 'hue-rotate('+(hue[c.color]-hue[source])+'deg) saturate(1.18) drop-shadow(0 5px 5px #0008)'
 }
 function animateFlight(fromRect,toElement,card,faceDown=false){
