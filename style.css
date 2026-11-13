@@ -53,5 +53,5 @@
 .hand .card.image-card{width:76px;height:119px;border:0;background:transparent}
 .hand .card.image-card img{border-radius:9px}
 .pile .card.image-card{width:82px;height:130px}
-.card-back{background:#171717 url('assets/card-atlas.jpeg') no-repeat;background-size:736px 490px;background-position:-255px -338px;color:transparent}
+.card-back{background:#171717 url('C7AF114F-93DB-4782-AF8A-56145BEEF82C.png') no-repeat;background-size:736px 490px;background-position:-255px -338px;color:transparent}
 .card-back::before{display:none}
