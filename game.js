@@ -7,7 +7,40 @@ let players=[],deck=[],discard=[],turn=0,direction=1,currentColor='red',drawnThi
 const ATLAS='C7AF114F-93DB-4782-AF8A-56145BEEF82C.png';
 const ART={0:[18,20,214,338,'red'],1:[220,20,407,338,'red'],2:[410,20,597,338,'blue'],3:[600,20,785,338,'blue'],4:[789,20,973,338,'yellow'],5:[977,20,1158,338,'yellow'],6:[1162,20,1346,338,'green'],7:[1350,20,1532,338,'green'],8:[55,360,250,682,'green'],9:[255,360,450,682,'green'],draw2:[462,360,666,682,'red'],reverse:[674,360,867,682,'blue'],skip:[878,360,1074,682,'yellow'],wild4:[1085,360,1281,682,'wild'],wild:[1290,360,1490,682,'wild'],back:[532,705,747,995,'back']};
 const artCache=new Map();
-function artUrl(c){const key=c.value; if(artCache.has(key))return artCache.get(key);const a=ART[key];if(!a)return '';const canvas=document.createElement('canvas');canvas.width=220;canvas.height=340;const ctx=canvas.getContext('2d');const im=new Image();im.src=ATLAS; if(!im.complete){im.onload=()=>{ctx.drawImage(im,a[0],a[1],a[2]-a[0],a[3]-a[1],0,0,220,340);artCache.set(key,canvas.toDataURL('image/jpeg',.92));render()};return '';}ctx.drawImage(im,a[0],a[1],a[2]-a[0],a[3]-a[1],0,0,220,340);const url=canvas.toDataURL('image/jpeg',.92);artCache.set(key,url);return url;}
+const COLOR_HUE={red:0,blue:215,green:135,yellow:52};
+function rgbToHsl(r,g,b){
+ r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+ let h=0,s=0,l=(max+min)/2;
+ if(d!==0){s=d/(1-Math.abs(2*l-1));switch(max){case r:h=((g-b)/d)%6;break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;}h*=60;if(h<0)h+=360}
+ return [h,s,l]
+}
+function hslToRgb(h,s,l){
+ const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;let r=0,g=0,b=0;
+ if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
+ return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)]
+}
+function artUrl(c){
+ const source=ART[c.value];if(!source)return '';
+ const target=c.color||source[4],key=c.value+':'+target;
+ if(artCache.has(key))return artCache.get(key);
+ const canvas=document.createElement('canvas');canvas.width=220;canvas.height=340;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});const im=new Image();
+ const draw=()=>{
+  ctx.drawImage(im,source[0],source[1],source[2]-source[0],source[3]-source[1],0,0,220,340);
+  const from=COLOR_HUE[source[4]],to=COLOR_HUE[target];
+  if(from!==undefined&&to!==undefined&&source[4]!==target){
+   const pixels=ctx.getImageData(0,0,220,340),data=pixels.data,delta=((to-from+540)%360)-180;
+   for(let i=0;i<data.length;i+=4){
+    const [h,s,l]=rgbToHsl(data[i],data[i+1],data[i+2]);
+    if(s>.22&&l>.12&&l<.92){const rgb=hslToRgb((h+delta+360)%360,s,l);data[i]=rgb[0];data[i+1]=rgb[1];data[i+2]=rgb[2]}
+   }
+   ctx.putImageData(pixels,0,0)
+  }
+  artCache.set(key,canvas.toDataURL('image/png'));render()
+ };
+ im.onload=draw;im.src=ATLAS;if(im.complete&&im.naturalWidth)draw();
+ return artCache.get(key)||''
+}
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 function makeDeck(){
  const d=[];let id=0;
@@ -43,7 +76,7 @@ function animateFlight(fromRect,toElement,card,faceDown=false){
  const isPlayerDraw=faceDown&&toElement.id==='playerHand';
  const h=isPlayerDraw?154:126,w=h*(220/340);
  const img=document.createElement('img');
- img.src=artUrl(faceDown?{value:'back'}:card);img.alt='';img.className='flying-card';if(!faceDown)img.style.filter=cardHueFilter(card);
+ img.src=artUrl(faceDown?{value:'back'}:card);img.alt='';img.className='flying-card';
  Object.assign(img.style,{left:(fromRect.left+fromRect.width/2-w/2)+'px',top:(fromRect.top+fromRect.height/2-h/2)+'px',width:w+'px',height:h+'px'});
  document.body.appendChild(img);
  const dx=(r.left+r.width/2)-(fromRect.left+fromRect.width/2),dy=(r.top+r.height/2)-(fromRect.top+fromRect.height/2);
@@ -53,7 +86,7 @@ function animateFlight(fromRect,toElement,card,faceDown=false){
 function startGame(){clearTimeout(botTimer);const name=$('playerName').value.trim()||'Spieler';const count=Number($('botCount').value)||2;players=[{id:0,name,hand:[],bot:false,saidUno:false}];for(let i=1;i<=count;i++)players.push({id:i,name:'Bot '+i,hand:[],bot:true,saidUno:false});deck=makeDeck();discard=[];players.forEach(p=>{p.hand=[];takeCards(p,7)});let first=deck.pop();while(first.color==='wild'){deck.unshift(first);first=deck.pop()}discard=[first];currentColor=first.color;turn=0;direction=1;drawnThisTurn=false;gameOver=false;unoCalled=false;$('homeScreen').classList.add('hidden');$('gameScreen').classList.remove('hidden');$('yourName').textContent=name;message('Spiel läuft. Du bist dran.');render();if(first.value==='skip')turn=nextIndex(turn);else if(first.value==='reverse')direction=-1;else if(first.value==='draw2'){turn=nextIndex(turn);takeCards(players[turn],2,true);turn=nextIndex(turn)}render();if(players[turn].bot)scheduleBot()}
 function nextIndex(i){return (i+direction+players.length)%players.length}
 function canPlay(c){const top=discard[discard.length-1];return c.color==='wild'||c.color===currentColor||c.value===top.value}
-function render(){if(!players.length)return;$('opponents').innerHTML=players.slice(1).map(p=>'<div class="opponent" data-player-id="'+p.id+'"><strong>'+escapeText(p.name)+'</strong><span>'+p.hand.length+' Karten</span><div class="opponent-cards">'+Array.from({length:Math.min(p.hand.length,5)},()=>'<i></i>').join('')+'</div></div>').join('');const top=discard[discard.length-1];$('deckCount').textContent=deck.length+' Karten';$('deckButtonCount').textContent=deck.length;const pile=$('discardPile');pile.className='card image-card';pile.innerHTML='';const topImg=document.createElement('img');topImg.alt=cardLabel(top);topImg.src=artUrl(top);topImg.style.filter=cardHueFilter(top);pile.appendChild(topImg);$('colorLabel').textContent='Farbe: '+LABEL[currentColor];$('turnLabel').textContent=players[turn].bot?players[turn].name+' ist dran':'Du bist dran';$('handCount').textContent=players[0].hand.length+' Karten';$('playerHand').innerHTML='';players[0].hand.forEach(c=>{const b=document.createElement('button');b.className='card image-card';b.dataset.cardId=c.id;const image=document.createElement('img');image.alt=cardLabel(c);image.src=artUrl(c);image.style.filter=cardHueFilter(c);b.appendChild(image);b.disabled=turn!==0||gameOver||!canPlay(c)||awaitingColor;b.setAttribute('aria-label',cardLabel(c)+' '+(c.color==='wild'?'Joker':LABEL[c.color]));b.addEventListener('click',()=>playCard(0,c.id));$('playerHand').appendChild(b)});$('drawButton').disabled=turn!==0||drawnThisTurn||gameOver;$('unoButton').disabled=gameOver||players[0].hand.length!==1}
+function render(){if(!players.length)return;$('opponents').innerHTML=players.slice(1).map(p=>'<div class="opponent" data-player-id="'+p.id+'"><strong>'+escapeText(p.name)+'</strong><span>'+p.hand.length+' Karten</span><div class="opponent-cards">'+Array.from({length:Math.min(p.hand.length,5)},()=>'<i></i>').join('')+'</div></div>').join('');const top=discard[discard.length-1];$('deckCount').textContent=deck.length+' Karten';$('deckButtonCount').textContent=deck.length;const pile=$('discardPile');pile.className='card image-card';pile.innerHTML='';const topImg=document.createElement('img');topImg.alt=cardLabel(top);topImg.src=artUrl(top);pile.appendChild(topImg);$('colorLabel').textContent='Farbe: '+LABEL[currentColor];$('turnLabel').textContent=players[turn].bot?players[turn].name+' ist dran':'Du bist dran';$('handCount').textContent=players[0].hand.length+' Karten';$('playerHand').innerHTML='';players[0].hand.forEach(c=>{const b=document.createElement('button');b.className='card image-card';b.dataset.cardId=c.id;const image=document.createElement('img');image.alt=cardLabel(c);image.src=artUrl(c);b.appendChild(image);b.disabled=turn!==0||gameOver||!canPlay(c)||awaitingColor;b.setAttribute('aria-label',cardLabel(c)+' '+(c.color==='wild'?'Joker':LABEL[c.color]));b.addEventListener('click',()=>playCard(0,c.id));$('playerHand').appendChild(b)});$('drawButton').disabled=turn!==0||drawnThisTurn||gameOver;$('unoButton').disabled=gameOver||players[0].hand.length!==1}
 function cardLabel(c){return ({skip:'⊘',reverse:'⇄',draw2:'+2',wild:'★',wild4:'+4'})[c.value]||c.value}
 function escapeText(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function message(t){$('message').textContent=t}
