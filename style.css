@@ -55,3 +55,19 @@
 .pile .card.image-card{width:82px;height:130px}
 .card-back{background:#171717 url('C7AF114F-93DB-4782-AF8A-56145BEEF82C.png') no-repeat;background-size:736px 490px;background-position:-255px -338px;color:transparent}
 .card-back::before{display:none}
+
+/* Version 1.4.0: animated physical draw and discard piles */
+.draw-pile{position:relative}
+.deck-button{position:relative;width:94px;height:137px;border:0;background:transparent;cursor:pointer;padding:0}
+.deck-stack{position:absolute;inset:5px 7px 9px 7px;display:block;transform:rotate(-5deg);filter:drop-shadow(0 8px 7px #0008)}
+.deck-stack::before,.deck-stack::after{content:"";position:absolute;inset:0;border:2px solid #fff;border-radius:12px;background:#20283c;transform:translate(5px,-4px) rotate(5deg)}
+.deck-stack::after{transform:translate(2px,-2px) rotate(2deg)}
+.deck-stack img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;border:3px solid white;border-radius:12px;z-index:1}
+.deck-button:disabled{opacity:.48;cursor:not-allowed}
+.deck-button:not(:disabled):hover{transform:translateY(-5px)}
+.deck-count{position:absolute;right:-8px;bottom:-2px;z-index:2;min-width:25px;padding:3px 6px;border-radius:20px;background:var(--accent);color:#171a29;font-size:12px;font-weight:900}
+.pile-count{font-size:11px;color:var(--muted)}
+.opponent-cards{display:flex;justify-content:center;margin-top:7px;padding-left:8px}
+.opponent-cards i{display:block;width:17px;height:25px;margin-left:-8px;border:1px solid #fff;border-radius:4px;background:linear-gradient(135deg,#d92e4b 0 25%,#246bd1 25% 50%,#22945b 50% 75%,#d9b51f 75%);box-shadow:0 2px 4px #0007}
+.flying-card{position:fixed;z-index:20;pointer-events:none;object-fit:fill;border:2px solid white;border-radius:10px;box-shadow:0 8px 20px #0009}
+@media(max-width:600px){.deck-button{width:75px;height:110px}.deck-stack img{border-radius:9px}.opponent-cards i{width:13px;height:19px}}
